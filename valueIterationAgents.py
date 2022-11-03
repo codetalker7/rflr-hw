@@ -45,6 +45,16 @@ class ValueIterationAgent(ValueEstimationAgent):
 
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        for iter in range(self.iterations):
+            newValues = util.Counter()
+
+            for state in self.mdp.getStates():
+                bestAction = self.computeActionFromValues(state)
+                if (bestAction == None):
+                    continue
+                newValues[state] = self.computeQValueFromValues(state, bestAction)
+
+            self.values = newValues
 
 
     def getValue(self, state):
@@ -60,7 +70,17 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        P = self.mdp.getTransitionStatesAndProbs(state, action)
+
+        # if there are no legal transitions, return None
+        if (len(P) == 0):
+            return None
+
+        # otherwise compute the Q value and return it
+        qval = 0
+        for (nextState, prob) in P:
+            qval += prob * (self.mdp.getReward(state, action, nextState) + self.discount * self.getValue(nextState))
+        return qval
 
     def computeActionFromValues(self, state):
         """
@@ -72,7 +92,21 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = self.mdp.getPossibleActions(state)
+        
+        # if no actions, return None
+        if (len(actions) == 0):
+            return None
+
+        # else take the action with max Q-value
+        bestAction = None
+        for action in actions:
+            if (bestAction == None):
+                bestAction = action
+            elif (self.computeQValueFromValues(state, action) >= self.computeQValueFromValues(state, bestAction)):
+                bestAction = action
+        
+        return bestAction
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
