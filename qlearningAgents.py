@@ -65,10 +65,10 @@ class QLearningAgent(ReinforcementAgent):
         """
         # get legal actions for the 'state'
         legalActions = self.getLegalActions(state)
-        # defn in learnAgents.py
+        # defn in learningAgents.py
 
+        # if no legal actions, return 0
         if len(legalActions) == 0:
-            # if no legal actions, return 0
             return 0.0
 
         # temporary 'Counter' object to hold (state, action)
@@ -91,22 +91,17 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
 
         # var to store the best legal actions
-        best_action = None
-
-        # initialize var to store max Q-value
-        max_qval = -math.inf
+        bestAction = None
 
         for action in legalActions:
-            # extract the q_value for this (state,action) pair
-            q_value = self.q_values[(state, action)]
+            if bestAction == None:
+                bestAction = action
+                continue
+            elif self.getQValue(state, action) > self.getQValue(state, bestAction):
+                bestAction = action
 
-            # update max_qval var and best action
-            if max_qval < q_value:
-                max_qval = q_value
-                best_action = action
-
-            # return best action
-            return best_action
+        # return best action
+        return bestAction
 
     def getAction(self, state):
         """
@@ -121,6 +116,9 @@ class QLearningAgent(ReinforcementAgent):
         """
         # get legal actions for the 'state'
         legalActions = self.getLegalActions(state)
+
+        if (len(legalActions) == 0):
+            return None
 
         # check whether we should exploit or explore
         # we use the util.flipCoin(epsilon) method for this, which gives True (1), with probability epsilon
@@ -143,26 +141,11 @@ class QLearningAgent(ReinforcementAgent):
         NOTE: You should never call this function,
         it will be called on your behalf
         """
-        # get the previous q-value for the (state,action) pair
-        q_value_old = self.getQValue(state, action)
-
-        # calculate the reward terms
-        reward_term_old = (1 - self.alpha) * q_value_old
-        reward_term_new = self.alpha * reward
-
-        if not nextState:
-            # nextState absent
-            # update the q-values for (state,action) pair
-            self.q_values[(state, action)] = reward_term_old + reward_term_new
-        else:
-            # if NextState is present
-            reward_term_nextState = (
-                self.alpha * self.discount * self.getValue(nextState)
-            )
-            # update the q-values for (state,action) pair
-            self.q_values[(state, action)] = (
-                reward_term_old + reward_term_new + reward_term_nextState
-            )
+        self.q_values[(state, action)] = (
+            self.getQValue(state, action) +
+            self.alpha *
+            (reward + self.discount * self.getValue(nextState) - self.getQValue(state, action))
+        )
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
